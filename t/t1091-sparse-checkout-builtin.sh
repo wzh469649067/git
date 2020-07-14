@@ -68,6 +68,18 @@ test_expect_success 'git sparse-checkout init' '
 	check_files repo a
 '
 
+test_expect_success 'git sparse-checkout works if repository format is wrong' '
+	test_when_finished git -C repo config core.repositoryFormatVersion 1 &&
+	git -C repo config --unset core.repositoryFormatVersion &&
+	git -C repo sparse-checkout init &&
+	git -C repo config core.repositoryFormatVersion >actual &&
+	echo 1 >expect &&
+	git -C repo config core.repositoryFormatVersion 0 &&
+	git -C repo sparse-checkout init &&
+	git -C repo config core.repositoryFormatVersion >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git sparse-checkout list after init' '
 	git -C repo sparse-checkout list >actual &&
 	cat >expect <<-\EOF &&

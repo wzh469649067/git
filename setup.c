@@ -455,12 +455,13 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		data->version = git_config_int(var, value);
 	else if (skip_prefix(var, "extensions.", &ext)) {
-		data->has_extensions = 1;
 		/*
 		 * record any known extensions here; otherwise,
 		 * we fall through to recording it as unknown, and
 		 * check_repository_format will complain
 		 */
+		int is_unallowed_extension = 1;
+
 		if (!strcmp(ext, "noop"))
 			;
 		else if (!strcmp(ext, "preciousobjects"))
@@ -469,10 +470,13 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			if (!value)
 				return config_error_nonbool(var);
 			data->partial_clone = xstrdup(value);
-		} else if (!strcmp(ext, "worktreeconfig"))
+		} else if (!strcmp(ext, "worktreeconfig")) {
 			data->worktree_config = git_config_bool(var, value);
-		else
+			is_unallowed_extension = 0;
+		} else
 			string_list_append(&data->unknown_extensions, ext);
+
+		data->has_unallowed_extensions |= is_unallowed_extension;
 	}
 
 	return read_worktree_config(var, value, vdata);
@@ -560,7 +564,7 @@ int upgrade_repository_format(int target_version)
 		return 0;
 
 	if (verify_repository_format(&repo_fmt, &err) < 0 ||
-	    (!repo_fmt.version && repo_fmt.has_extensions)) {
+	    (!repo_fmt.version && repo_fmt.has_unallowed_extensions)) {
 		warning("unable to upgrade repository format from %d to %d: %s",
 			repo_fmt.version, target_version, err.buf);
 		strbuf_release(&err);

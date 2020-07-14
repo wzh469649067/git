@@ -678,8 +678,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
 			      "working trees unless the config\n"
-			      "extension worktreeConfig is enabled. "
-			      "Please read \"CONFIGURATION FILE\"\n"
+			      "extension worktreeConfig is enabled "
+			      "and core.repositoryFormatVersion is at least\n"
+			      "1. Please read \"CONFIGURATION FILE\""
 			      "section in \"git help worktree\" for details"));
 		else
 			given_config_source.file = git_pathdup("config");
