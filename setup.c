@@ -473,6 +473,19 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 		} else if (!strcmp(ext, "worktreeconfig")) {
 			data->worktree_config = git_config_bool(var, value);
 			is_unallowed_extension = 0;
+		} else if (!strcmp(ext, "objectformat")) {
+			/*
+			 * This one and any newer ones that didn't exist
+			 * back in 2.27 should not be marked as allowed.
+			 */
+			int format;
+
+			if (!value)
+				return config_error_nonbool(var);
+			format = hash_algo_by_name(value);
+			if (format == GIT_HASH_UNKNOWN)
+				return error("invalid value for 'extensions.objectformat'");
+			data->hash_algo = format;
 		} else
 			string_list_append(&data->unknown_extensions, ext);
 
@@ -519,6 +532,7 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 		repository_format_precious_objects = 0;
 		set_repository_format_partial_clone(NULL);
 		repository_format_worktree_config = 0;
+		candidate->hash_algo = GIT_HASH_SHA1;
 	}
 	string_list_clear(&candidate->unknown_extensions, 0);
 
