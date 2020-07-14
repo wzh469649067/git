@@ -90,4 +90,20 @@ test_expect_success 'show advice when extensions.* are not enabled' '
 	test_i18ngrep "core.repositoryFormatVersion is at least" err
 '
 
+test_expect_success 'correctly read config.worktree from submodules' '
+	test_unconfig extensions.worktreeConfig &&
+	git init sub &&
+	(
+		cd sub &&
+		test_commit A &&
+		git config extensions.worktreeConfig true &&
+		git config --worktree wtconfig.sub test-value
+	) &&
+	git submodule add ./sub &&
+	git commit -m "add sub" &&
+	echo test-value >expect &&
+	test-tool config --submodule=sub get_value wtconfig.sub >actual &&
+	test_cmp expect actual
+'
+
 test_done
